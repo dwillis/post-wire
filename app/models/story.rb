@@ -10,11 +10,12 @@ class Story < ActiveRecord::Base
         begin
           article = PostHaste::Article.create_from_url(entry.entry_id)
           story = Story.find_or_create_by_url(article.permalink)
-          article.updated_datetime > story.post_updated ? updated = true : updated = false
-          story.update_attributes(:title => article.title, :section => article.section.gsub('/','').titleize, :type => article.type, :byline => article.byline, :post_created => article.created_datetime, :post_updated => article.updated_datetime, :post_published => article.published_datetime, :tags => article.tags, :updated => updated)
+          story.update_attributes(:title => article.title, :section => article.section.gsub('/','').titleize, :type => article.type, :byline => article.byline, :post_created => article.created_datetime, :post_updated => article.updated_datetime, :post_published => article.published_datetime, :tags => article.tags, :updated => false)
           doc = Nokogiri::HTML(open(entry.entry_id).read)
           body = doc.search('article').inner_html
+          article.updated_datetime > story.post_updated ? updated = true : updated = false
           if updated
+            story.update_attribute(:updated, true)
             version = Version.where(:story_id => story.id).order('version_number desc').first
             if version
               next_version = version.dup
